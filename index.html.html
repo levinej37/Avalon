@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avalon Housing — Call Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#F1E9D8;
+    --navy-panel:#FBF7EE;
+    --navy-panel-2:#F4EDE0;
+    --border:#E0D3B8;
+    --border-soft:#E8DEC8;
+    --text:#332B1F;
+    --text-dim:#5C5240;
+    --text-faint:#8C7F65;
+    --amber:#C4791F;
+    --amber-soft:rgba(196,121,31,0.13);
+    --green:#3F7D4E;
+    --green-soft:rgba(63,125,78,0.13);
+    --red:#B6452F;
+    --red-soft:rgba(182,69,47,0.13);
+    --blue:#2D6B8C;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--navy-deep);
+    color:var(--text);
+    font-family:'Inter',-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  /* ── Top correction banner ─────────────────────────────── */
+  .correction-bar{
+    background:linear-gradient(90deg,#FCF7EC,#F8EFDC);
+    border-bottom:2px solid var(--amber);
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+  .correction-bar .dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--amber);
+    flex-shrink:0;
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(196,121,31,0.45);}
+    50%{box-shadow:0 0 0 6px rgba(196,121,31,0);}
+  }
+  .correction-bar .label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    color:#955615;
+    font-weight:600;
+    flex-shrink:0;
+  }
+  .correction-bar .msg{
+    font-size:14px;
+    color:var(--text);
+    line-height:1.4;
+  }
+  .correction-bar .msg b{color:#955615;font-weight:600;}
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .header{
+    padding:28px 24px 18px;
+    max-width:1040px;
+    margin:0 auto;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    color:var(--text-faint);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .header h1{
+    font-size:28px;
+    font-weight:600;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .header .sub{
+    color:var(--text-dim);
+    font-size:14.5px;
+    line-height:1.5;
+    max-width:640px;
+  }
+
+  /* ── Who am I selector ──────────────────────────────────── */
+  .whoami{
+    max-width:1040px;
+    margin:0 auto;
+    padding:0 24px 8px;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .whoami .lbl{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    letter-spacing:0.06em;
+    margin-right:6px;
+  }
+  .who-btn{
+    background:var(--navy-panel);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+    transition:all .15s ease;
+    font-family:'Inter',sans-serif;
+  }
+  .who-btn:hover{border-color:var(--blue);color:var(--text);}
+  .who-btn.active{
+    background:var(--amber-soft);
+    border-color:var(--amber);
+    color:var(--amber);
+  }
+
+  /* ── Tabs ───────────────────────────────────────────────── */
+  .tabs{
+    max-width:1040px;
+    margin:0 auto;
+    padding:10px 24px 0;
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .tab{
+    background:none;
+    border:none;
+    color:var(--text-faint);
+    padding:12px 16px;
+    font-size:13.5px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    white-space:nowrap;
+    border-bottom:2px solid transparent;
+    transition:all .15s ease;
+  }
+  .tab:hover{color:var(--text-dim);}
+  .tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+
+  .panel{display:none;max-width:1040px;margin:0 auto;padding:24px;}
+  .panel.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ── Cards ──────────────────────────────────────────────── */
+  .card{
+    background:var(--navy-panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    margin-bottom:14px;
+  }
+  .card h3{
+    font-size:15px;
+    margin:0 0 10px;
+    color:var(--text);
+    font-weight:600;
+  }
+  .card p{
+    font-size:14px;
+    line-height:1.6;
+    color:var(--text-dim);
+    margin:0 0 10px;
+  }
+  .card p:last-child{margin-bottom:0;}
+  .card ul{margin:0;padding-left:18px;}
+  .card li{font-size:14px;line-height:1.7;color:var(--text-dim);margin-bottom:4px;}
+  .card li b, p b{color:var(--text);font-weight:600;}
+
+  .stat-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .stat{
+    background:var(--navy-panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:14px 16px;
+  }
+  .stat .num{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:24px;
+    font-weight:700;
+    color:var(--amber);
+    line-height:1.1;
+  }
+  .stat .lbl{
+    font-size:11.5px;
+    color:var(--text-faint);
+    margin-top:4px;
+    line-height:1.3;
+  }
+
+  .tag{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.05em;
+    padding:3px 9px;
+    border-radius:5px;
+    margin-right:6px;
+    margin-bottom:6px;
+  }
+  .tag.green{background:var(--green-soft);color:var(--green);}
+  .tag.amber{background:var(--amber-soft);color:var(--amber);}
+  .tag.red{background:var(--red-soft);color:var(--red);}
+  .tag.blue{background:rgba(45,107,140,0.13);color:var(--blue);}
+
+  table.roles{width:100%;border-collapse:collapse;margin-top:4px;}
+  table.roles td,table.roles th{
+    padding:10px 12px;
+    text-align:left;
+    font-size:13.5px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  table.roles th{
+    color:var(--text-faint);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    font-weight:500;
+  }
+  table.roles td{color:var(--text-dim);}
+  table.roles td.name{color:var(--text);font-weight:600;}
+  table.roles tr:last-child td{border-bottom:none;}
+  table.roles tr.highlight td{background:var(--amber-soft);}
+
+  .pricing-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:680px){.pricing-grid{grid-template-columns:1fr;}}
+  .price-card{
+    background:var(--navy-panel-2);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px;
+  }
+  .price-card .opt-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    letter-spacing:0.06em;
+    margin-bottom:4px;
+  }
+  .price-card h3{margin:0 0 10px;font-size:16px;}
+  .price-card .total{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:26px;
+    font-weight:700;
+    color:var(--amber);
+    margin-bottom:2px;
+  }
+  .price-card .total-sub{font-size:12px;color:var(--text-faint);margin-bottom:14px;}
+  .price-card ul{padding-left:18px;margin:0;}
+  .price-card li{font-size:13px;color:var(--text-dim);line-height:1.6;margin-bottom:4px;}
+
+  .person-card{
+    border-left:3px solid var(--border);
+    transition:all .2s ease;
+  }
+  .person-card.spotlight{
+    border-left-color:var(--amber);
+    background:var(--navy-panel-2);
+    box-shadow:0 0 0 1px var(--amber-soft);
+  }
+  .person-card.dimmed{opacity:0.35;}
+  .person-card .role{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--blue);
+    letter-spacing:0.04em;
+    margin-bottom:6px;
+  }
+
+  .footer-note{
+    max-width:1040px;
+    margin:20px auto 0;
+    padding:0 24px;
+    font-size:12px;
+    color:var(--text-faint);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<div class="correction-bar">
+  <div class="dot"></div>
+  <div class="label">CLARIFY UPFRONT</div>
+  <div class="msg">The written RFP names <b>Jim Levine</b> in a Strategic Advisor capacity. On this account it's actually <b>TJ Ryan</b>. Correct this with Avalon in the first five minutes — don't let it surface later as confusion.</div>
+</div>
+
+<div class="header">
+  <div class="eyebrow">CTS · Internal · First Interview Prep</div>
+  <h1>Avalon Housing — Call Console</h1>
+  <div class="sub">Quick-reference for the room. Tap your name below to spotlight your talking points, or jump straight to a tab.</div>
+</div>
+
+<div class="whoami">
+  <span class="lbl">I AM</span>
+  <button class="who-btn" data-who="bryan">Bryan</button>
+  <button class="who-btn" data-who="mary">Mary</button>
+  <button class="who-btn" data-who="sean">Sean</button>
+  <button class="who-btn" data-who="tj">TJ</button>
+  <button class="who-btn" data-who="clear" style="margin-left:4px;">Clear</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="brief">Brief</button>
+  <button class="tab" data-tab="pitch">The Pitch</button>
+  <button class="tab" data-tab="env">Environment</button>
+  <button class="tab" data-tab="onsite">On-Site</button>
+  <button class="tab" data-tab="pricing">Pricing</button>
+  <button class="tab" data-tab="landmines">Landmines</button>
+  <button class="tab" data-tab="talkingpoints">Talking Points</button>
+  <button class="tab" data-tab="avalonpeople">Avalon People</button>
+</div>
+
+<!-- BRIEF -->
+<div class="panel active" id="brief">
+  <div class="card">
+    <h3>Who's on the call</h3>
+    <table class="roles">
+      <tr><th>Name</th><th>CTS Role</th><th>Why you're here</th></tr>
+      <tr><td class="name">Bryan Lukralle</td><td>Chief Strategy Officer</td><td>Executive credibility, strategic framing</td></tr>
+      <tr><td class="name">Mary Moss</td><td>Deputy Director, Client Management</td><td>Named escalation point above day-to-day account management</td></tr>
+      <tr><td class="name">Sean Murphy</td><td>VP of Service Delivery</td><td>Owns the operational model — directly answers their pain points</td></tr>
+      <tr><td class="name">TJ Ryan</td><td>Strategic Advisor</td><td>Roadmap/QBR cadence, long-range planning — <b style="color:var(--amber)">correct name for this role on the account</b></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Who Avalon is</h3>
+    <div class="stat-row">
+      <div class="stat"><div class="num">$12M</div><div class="lbl">Annual revenue</div></div>
+      <div class="stat"><div class="num">~115</div><div class="lbl">Staff, Google Workspace</div></div>
+      <div class="stat"><div class="num">~31</div><div class="lbl">Locations (1 main + ~30 housing sites)</div></div>
+      <div class="stat"><div class="num">2018</div><div class="lbl">Last formal IT/security assessment</div></div>
+    </div>
+    <p>Nonprofit affordable housing organization, Ann Arbor, MI. Handles tenant, client, and financial data under <b>HIPAA, PCI, Social Current accreditation</b>, and state/federal funding requirements.</p>
+  </div>
+
+  <div class="card">
+    <h3>How we got here</h3>
+    <p><b>Levi</b> (Avalon staff) met Jim at the <b>NTEN conference in Detroit</b> earlier this year — that relationship is why Avalon reached out to CTS directly. <b>8 vendors</b> were contacted for this RFQ; Avalon is narrowing the field, and this interview is part of that process.</p>
+    <p>Primary contact: <b>Rachel Bush</b>, Executive Operations Manager. Levi is typically copied.</p>
+  </div>
+</div>
+
+<!-- PITCH -->
+<div class="panel" id="pitch">
+  <div class="card">
+    <h3 style="color:var(--amber)">Lead with this</h3>
+    <p>Avalon is <b>not</b> shopping around out of curiosity. They are actively leaving a three-year MSP contract that ends <b>October 31, 2026</b>, and they are unhappy. This is the single most useful frame for the entire call.</p>
+  </div>
+
+  <div class="card">
+    <h3>Why their current MSP failed</h3>
+    <ul>
+      <li>Poor communication</li>
+      <li>Slow responsiveness</li>
+      <li>A ticketing system staff found unusable</li>
+      <li>Inconsistent follow-through</li>
+    </ul>
+    <p style="margin-top:10px;">The result: Avalon's own internal team <b>stopped routing requests through their MSP</b> because it was faster to just handle things themselves. They are paying <b style="color:var(--amber)">$77,000/year</b> for a service they've largely stopped using.</p>
+  </div>
+
+  <div class="card">
+    <h3>Avalon's internal IT capacity</h3>
+    <p>Two internal staff currently handle IT/ops: an <b>Executive Operations Manager</b> (Mechanical Engineering background) and an <b>Office Manager/IT Coordinator</b> (Public Administration / DB & asset management background). They handle Tier 1, Google Workspace admin, password resets, basic troubleshooting, device setup, and inventory.</p>
+    <p><b>Ticket volume: 50–70/month</b>, mostly handled internally. This is a <b>co-managed</b> engagement — their team keeps real access to ConnectWise, ScreenConnect, IT Glue, and the Field Effect dashboard.</p>
+  </div>
+
+  <div class="card">
+    <h3>Differentiators to lean on</h3>
+    <span class="tag green">Nonprofit/charter school focus since 2010</span>
+    <span class="tag green">Never acquired or rolled up</span>
+    <span class="tag green">100% client renewal in 2024</span>
+    <span class="tag blue">60% of book runs Google Workspace</span>
+    <span class="tag blue">Full Apple/iOS device management</span>
+    <span class="tag amber">Dedicated on-site hire, Avalon picks the person</span>
+  </div>
+</div>
+
+<!-- ENVIRONMENT -->
+<div class="panel" id="env">
+  <div class="card">
+    <h3>Devices</h3>
+    <p>110 Lenovo laptops · 1 Mac laptop · 9 desktops · 8 iPads · 2 Lenovo tablets</p>
+  </div>
+  <div class="card">
+    <h3>Servers</h3>
+    <p>3 on-prem servers, ~400 GB total data, hardware <b>4+ years old</b> — worth flagging as a lifecycle conversation, not an alarm.</p>
+  </div>
+  <div class="card">
+    <h3>Network</h3>
+    <p>~12 managed sites. Existing network vendor is being <b style="color:var(--amber)">retained</b> by Avalon — reason unconfirmed. Do not speculate on replacing this vendor unless Avalon raises it first.</p>
+  </div>
+  <div class="card">
+    <h3>Current security stack</h3>
+    <p>SentinelOne (EDR) and Cisco Umbrella (DNS filtering). Security awareness training was <b>never fully deployed</b>.</p>
+  </div>
+  <div class="card">
+    <h3>Out of scope — confirmed</h3>
+    <span class="tag red">Phone system (Talkroute) — explicitly excluded</span>
+    <span class="tag red">Physical printer maintenance — network connectivity only</span>
+  </div>
+  <div class="card">
+    <h3>Key applications</h3>
+    <p>ADP, Foothold, HMIS, OneSite, MIP, DonorPerfect, Monday.com, Homebase, Glide, Zoom</p>
+  </div>
+</div>
+
+<!-- ON-SITE -->
+<div class="panel" id="onsite">
+  <div class="card">
+    <h3>The commitment</h3>
+    <p>Avalon's RFQ requires <b>~1 day/week on-site</b>. CTS is hiring a <b>dedicated Ann Arbor-based engineer</b> — not shared, not rotating.</p>
+  </div>
+  <div class="card">
+    <h3>If asked about Michigan coverage</h3>
+    <ul>
+      <li>CTS has no current staff in Michigan — be upfront about this, don't dodge it</li>
+      <li>Denver precedent: zero presence 18 months ago → two clients + one full-time engineer today</li>
+      <li>Hiring begins at contract signature; goal is the person is in place before the engagement starts</li>
+      <li><b style="color:var(--amber)">Avalon is involved in the hiring/selection process</b> for this specific role — say this plainly, it's a real differentiator</li>
+      <li>When not on-site, this engineer works remote tickets for Avalon and other clients, but remains the team's consistent known contact</li>
+    </ul>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="panel" id="pricing">
+  <div class="card">
+    <h3>Why two options</h3>
+    <p>Avalon's actual support demand on CTS (vs. what their internal team absorbs) is still unknown. Two models, two risk profiles.</p>
+  </div>
+  <div class="pricing-grid">
+    <div class="price-card">
+      <div class="opt-label">OPTION A</div>
+      <h3>TCP + MCP — Full Service</h3>
+      <div class="total">$17,497<span style="font-size:14px;color:var(--text-faint);">/mo</span></div>
+      <div class="total-sub">~$209,964/year</div>
+      <ul>
+        <li>All-inclusive, unlimited helpdesk</li>
+        <li>No hourly billing, no overage tracking</li>
+        <li>Flat predictable monthly cost</li>
+      </ul>
+    </div>
+    <div class="price-card">
+      <div class="opt-label">OPTION B</div>
+      <h3>Essentials + MCP — Pay-As-You-Go</h3>
+      <div class="total">$10,468<span style="font-size:14px;color:var(--text-faint);">/mo</span></div>
+      <div class="total-sub">recurring + separate block hours (rate TBD)</div>
+      <ul>
+        <li>Lower fixed monthly cost</li>
+        <li>User support draws from a purchased hour block</li>
+        <li>Auto-renews when block drops below 20%</li>
+        <li>Better fit if Avalon's team keeps absorbing Tier 1</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px;">
+    <h3>Both options include</h3>
+    <p>Field Effect MDR (EDR/CDR/NDR) · Wizer security awareness training · Inky email security on Google Workspace · AFI.ai cloud backup · Acronis on-prem server backup · NinjaOne (Windows) + Addigy (Apple/iOS) device management · Dedicated on-site Ann Arbor resource</p>
+    <p><b style="color:var(--green)">Implementation/onboarding fees waived on both options — $13,700 combined value.</b></p>
+  </div>
+  <div class="card">
+    <h3>Anchoring against current spend</h3>
+    <p>Current spend baseline: <b>$77,000/year</b>. Both options come in meaningfully higher — that's expected. Don't get defensive about the delta. Frame it as investment against what they're currently <b>not</b> getting: real security stack, on-site presence, ticketing visibility.</p>
+  </div>
+</div>
+
+<!-- LANDMINES -->
+<div class="panel" id="landmines">
+  <div class="card" style="border-left:3px solid var(--red);">
+    <h3 style="color:var(--red)">Network vendor relationship</h3>
+    <p>Avalon is retaining their existing network vendor for the ~12 managed sites. We don't know why. CTS's role is monitoring + coordination, not ownership. <b>Do not speculate on replacing that vendor</b> unless Avalon raises it first.</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--red);">
+    <h3 style="color:var(--red)">Phone system</h3>
+    <p>Out of scope. Avalon uses Talkroute and explicitly did not request phone support. Don't offer it as an add-on in the room.</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--red);">
+    <h3 style="color:var(--red)">Network device counts</h3>
+    <p>Our estimates (~50 devices, ~12 circuits) are stated as <b>estimates</b> in the proposal. Actual counts get confirmed during onboarding discovery — don't present these as firm.</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--red);">
+    <h3 style="color:var(--red)">Block hours rate (Option B)</h3>
+    <p>Currently marked <b>[TBD]</b> in the written proposal pending internal sign-off. Don't quote a number in the room that contradicts the document Avalon already has.</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--red);">
+    <h3 style="color:var(--red)">SLA numbers</h3>
+    <p>The SLA table in the written proposal (P1: 15min/2hr, P2: 30min/4hr) doesn't match CTS's standard internal reference table. <b>Don't raise this proactively.</b> If asked why the numbers look different from another CTS document Avalon may have seen, or if anyone internally flags it: <b>"that reflects an outdated internal SLA chart — the numbers in Avalon's proposal are current."</b> Everyone in the room should use this same line if it comes up. Do not improvise a different explanation.</p>
+  </div>
+
+  <div class="card" style="border-left:3px solid var(--amber);">
+    <h3 style="color:var(--amber)">Strategic Advisor naming</h3>
+    <p>RFP currently names Jim in this capacity. Correct it: <b>TJ Ryan</b> is the actual Strategic Advisor on this account. Raise this early in the call so it doesn't surface as confusion later.</p>
+  </div>
+</div>
+
+<!-- TALKING POINTS -->
+<div class="panel" id="talkingpoints">
+  <div class="card person-card" data-person="bryan">
+    <div class="role">BRYAN LUKRALLE — CHIEF STRATEGY OFFICER</div>
+    <p>Frame CTS's independence and stability as the direct answer to why Avalon is leaving their current MSP. <b>Never acquired, never rolled up</b> — Sachin Gujral founded the company in 2010 and still runs it. There's no parent company or new ownership group that can quietly change the terms of this relationship down the line. That instability is exactly what Avalon is walking away from.</p>
+  </div>
+  <div class="card person-card" data-person="mary">
+    <div class="role">MARY MOSS — DEPUTY DIRECTOR, CLIENT MANAGEMENT</div>
+    <p>Position yourself as a named escalation point above the day-to-day account manager. This directly answers Avalon's complaint that their current MSP relationship felt like a black box with no real accountability above the help desk. Make clear there's always a senior person they can reach who isn't a ticket queue.</p>
+  </div>
+  <div class="card person-card" data-person="sean">
+    <div class="role">SEAN MURPHY — VP OF SERVICE DELIVERY</div>
+    <p>Speak directly to the operational model: ConnectWise board visibility for Avalon's internal team, SLA structure and response times, and the monthly/quarterly governance cadence. This is the most direct answer to their stated pain — poor communication, no visibility, inconsistent follow-through. Don't just describe the tools, describe how the cadence actually fixes what broke with their last provider.</p>
+  </div>
+  <div class="card person-card" data-person="tj">
+    <div class="role">TJ RYAN — STRATEGIC ADVISOR</div>
+    <p>This is the correction moment — be the one to clarify the RFP naming early, plainly, without making it a big deal. Then own the forward-looking conversation: how the Roadmap/QBR cadence supports their long-term planning rather than just break-fix, and how CTS helps Avalon plan budget and technology investment a year out instead of reacting quarter to quarter.</p>
+  </div>
+</div>
+
+<!-- AVALON PEOPLE -->
+<div class="panel" id="avalonpeople">
+  <div class="card" style="border-left:3px solid var(--blue);">
+    <div class="role">RACHEL BUSH — EXECUTIVE OPERATIONS MANAGER</div>
+    <h3 style="margin-top:6px;">Primary RFP contact, our main point of contact throughout</h3>
+    <p><b>Background:</b> Mechanical engineering degree (BSME) plus a Master of Education from the University of Michigan. Early career spent ~7 years in engineering and program management work with significant international travel. Returned to school for her M.Ed wanting to put down roots in Ann Arbor; taught high school physics for two years.</p>
+    <p>Spent 14 years primarily as a stay-at-home parent raising three kids, with side work to stay active — including earning a <b>Residential Builder license</b> and running her own remodeling business for five years.</p>
+    <p>Came to Avalon during COVID after becoming acutely aware of the pandemic's impact on housing insecurity and mental health. Joined as <b>Executive Assistant to the Executive Director</b>; over ~5 years at Avalon the agency grew substantially in size, funding, and operations, and her role expanded into <b>Executive Operations Manager</b> — now supporting the Board of Trustees, Executive team, Leadership team, and Operations team directly.</p>
+    <div style="margin-top:10px;">
+      <span class="tag blue">Engineering mindset — values structure and clear process</span>
+      <span class="tag blue">Built and ran her own business — understands vendor relationships from both sides</span>
+      <span class="tag green">Mission-driven, came to this work deliberately, not by default</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How to read Rachel in the room</h3>
+    <ul>
+      <li>Her engineering background means she'll respond well to specifics — numbers, clear scope boundaries, concrete SLAs — over broad reassurance language.</li>
+      <li>She came up through Executive Assistant into an operations role with expanding scope. She is likely the connective tissue between Avalon's leadership and the day-to-day reality of the engagement — treat her as someone who needs to be able to explain this decision upward, not just sign off on it.</li>
+      <li>Having run her own remodeling business, she's been on the other side of a vendor relationship. She'll likely have a low tolerance for vague promises and a high one for straight answers, including "we don't know yet."</li>
+    </ul>
+  </div>
+
+  <div class="card" style="border-left:3px solid var(--green);">
+    <div class="role" style="color:var(--green);">LEVI — OFFICE MANAGER & IT COORDINATOR</div>
+    <h3 style="margin-top:6px;">Met Jim at NTEN in Detroit, March 2026</h3>
+    <p>Confirmed title: <b>Office Manager & IT Coordinator</b>. This lines up with the Q&A description of Avalon's second internal IT/ops staffer — background in Public Administration and database/IT asset management. He is very likely the person actually doing the hands-on Tier 1 work day to day: device setup/teardown, basic troubleshooting, inventory.</p>
+    <p>Last name still unconfirmed — a natural, low-key way to get it is just reading it off his email or asking directly early in the call ("good to see you again since Detroit — remind me, is it still Office Manager and IT Coordinator?").</p>
+    <div style="margin-top:10px;">
+      <span class="tag green">Likely the most hands-on technical voice in the room from Avalon's side</span>
+      <span class="tag blue">Met Jim through NTEN — a nonprofit tech conference, so he's plugged into the broader nonprofit IT community</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>How to read Levi in the room</h3>
+    <ul>
+      <li>As Office Manager & IT Coordinator, he's almost certainly the one who feels the day-to-day pain of the current MSP relationship most directly — he's the one actually filing tickets, chasing follow-up, and absorbing work that should have gone to the MSP.</li>
+      <li>He attends nonprofit tech conferences (NTEN), which suggests genuine interest in doing IT well, not just keeping the lights on. Technical credibility will land better with him than pure sales framing.</li>
+      <li>He's a co-managed partner in this engagement, not just a stakeholder — he and Rachel are the two people whose day-to-day workload this proposal is actually designed around.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="footer-note">Internal use only · Full RFP and pricing detail available from Jim Levine on request</div>
+
+<script>
+  // Tabs
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Who am I spotlight
+  const whoBtns = document.querySelectorAll('.who-btn');
+  const personCards = document.querySelectorAll('.person-card');
+  whoBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const who = btn.dataset.who;
+      whoBtns.forEach(b => b.classList.remove('active'));
+      if(who === 'clear'){
+        personCards.forEach(c => { c.classList.remove('spotlight','dimmed'); });
+        return;
+      }
+      btn.classList.add('active');
+      personCards.forEach(c => {
+        if(c.dataset.person === who){
+          c.classList.add('spotlight'); c.classList.remove('dimmed');
+        } else {
+          c.classList.add('dimmed'); c.classList.remove('spotlight');
+        }
+      });
+      // jump to talking points tab
+      tabs.forEach(t => t.classList.remove('active'));
+      panels.forEach(p => p.classList.remove('active'));
+      document.querySelector('[data-tab="talkingpoints"]').classList.add('active');
+      document.getElementById('talkingpoints').classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
